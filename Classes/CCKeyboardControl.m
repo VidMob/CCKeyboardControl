@@ -43,6 +43,7 @@
 @interface UIView(CCKeyboardControl_protected)
 
 + (UIView *)cc_KeyboardView;
++ (UIView *)cc_KeyboardAccessoryView;
 
 @end
 
@@ -357,6 +358,7 @@ char *keyboardTriggerOffsetKey;
 
     dispatch_async(dispatch_get_main_queue(), ^{
         self.cc_KeyboardView.hidden = NO;
+        self.cc_KeyboardAccessoryView.hidden = NO;
     });
     
     if ([self ccScreenEdgePanRecognizer].state == UIGestureRecognizerStateBegan)
@@ -425,6 +427,7 @@ char *keyboardTriggerOffsetKey;
         case UIGestureRecognizerStateBegan:
             gesture.maximumNumberOfTouches = gesture.numberOfTouches;
             self.cc_KeyboardView.userInteractionEnabled = NO;
+            self.cc_KeyboardAccessoryView.userInteractionEnabled = NO;
             break;
         case UIGestureRecognizerStateChanged:
         {
@@ -435,6 +438,7 @@ char *keyboardTriggerOffsetKey;
             if (keyboardYOriging != self.cc_KeyboardView.yOrigin)
             {
                 self.cc_KeyboardView.yOrigin = keyboardYOriging;
+                self.cc_KeyboardAccessoryView.yOrigin = keyboardYOriging;
                 [self cc_callBlocksWithKeyboardFrame:self.cc_KeyboardView.frame state:CCKeyboardControlStatePanning force:NO];
             }
             break;
@@ -443,6 +447,7 @@ char *keyboardTriggerOffsetKey;
         case UIGestureRecognizerStateCancelled:
         {
             self.cc_KeyboardView.userInteractionEnabled = YES;
+            self.cc_KeyboardAccessoryView.userInteractionEnabled = YES;
             if (keyboardYOriging == self.cc_KeyboardWindow.height - keyboardHeight)
                 break;
             CGPoint velocity = [gesture velocityInView:self.cc_KeyboardView];
@@ -458,6 +463,7 @@ char *keyboardTriggerOffsetKey;
 
                 [UIView animateWithDuration:.1 + .2 * (diff / keyboardHeight) delay:.0 options:UIViewAnimationOptionCurveEaseOut | UIViewAnimationOptionBeginFromCurrentState animations:^{
                     self.cc_KeyboardView.yOrigin = keyboardYOriging;
+                    self.cc_KeyboardAccessoryView.yOrigin = keyboardYOriging;
                     [self cc_callBlocksWithKeyboardFrame:self.cc_KeyboardView.frame state:CCKeyboardControlStatePanning force:NO];
                     
                 } completion:^(__unused BOOL finished){
@@ -500,6 +506,35 @@ char *keyboardTriggerOffsetKey;
 }
 
 //////////////////////// properties
+
+- (UIWindow *)cc_KeyboardAccessoryViewWindow
+{
+    return [self.class cc_KeyboardAccessoryViewWindow];
+}
+
++ (UIWindow *)cc_KeyboardAccessoryViewWindow
+{
+    __block UIWindow *cc_KeyboardWindow = 0;
+    [[UIApplication sharedApplication].windows enumerateObjectsUsingBlock:^(UIWindow *window, NSUInteger idx, BOOL *stop) {
+        if ((*stop = [window isKindOfClass:NSClassFromString(@"UITextEffectsWindow")] && [self cc_KeyboardView:window] != 0))
+            cc_KeyboardWindow = window;
+    }];
+    if (cc_KeyboardWindow == 0 && [UIApplication sharedApplication].windows.count > 1)
+        return [[UIApplication sharedApplication].windows lastObject];
+    return cc_KeyboardWindow;
+}
+
+- (UIView *)cc_KeyboardAccessoryView
+{
+    return [self.class cc_KeyboardAccessoryView];
+}
+
++ (UIView *)cc_KeyboardAccessoryView
+{
+    return [self cc_KeyboardView:self.cc_KeyboardAccessoryViewWindow];
+}
+
+
 - (UIWindow *)cc_KeyboardWindow
 {
     return [self.class cc_KeyboardWindow];
@@ -509,7 +544,7 @@ char *keyboardTriggerOffsetKey;
 {
     __block UIWindow *cc_KeyboardWindow = 0;
     [[UIApplication sharedApplication].windows enumerateObjectsUsingBlock:^(UIWindow *window, NSUInteger idx, BOOL *stop) {
-        if ((*stop = [self cc_KeyboardView:window] != 0))
+        if ((*stop = [window isKindOfClass:NSClassFromString(@"UIRemoteKeyboardWindow")] && [self cc_KeyboardView:window] != 0))
             cc_KeyboardWindow = window;
     }];
     if (cc_KeyboardWindow == 0 && [UIApplication sharedApplication].windows.count > 1)
@@ -627,6 +662,7 @@ int indexOfPointer(void *pointer)
 - (void)hideKeyboard
 {
     self.cc_KeyboardView.hidden = YES;
+    self.cc_KeyboardAccessoryView.hidden = YES;
     [self.cc_KeyboardControlFirstResponder resignFirstResponder];
 }
 
