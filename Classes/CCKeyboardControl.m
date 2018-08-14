@@ -157,7 +157,7 @@ static NSMutableArray *_cc_registeredViews;
 - (CGRect)keyboardFrameInView
 {
     CGRect keyboardViewFrame = self.cc_KeyboardView ? self.cc_KeyboardView.frame : CGRectMake(0, [UIScreen mainScreen].bounds.size.height, 0, 0);
-    return [self convertRect:keyboardViewFrame fromView:self.cc_KeyboardWindow];
+    return [self cc_convertKeyboardFrame:keyboardViewFrame];
 }
 
 char *keyboardTriggerOffsetKey;
@@ -179,7 +179,7 @@ char *keyboardTriggerOffsetKey;
 //private methods
 - (void)cc_callBlocksWithKeyboardFrame:(CGRect)keyboardFrame state:(CCKeyboardControlState)state force:(BOOL)force
 {
-    keyboardFrame = [self convertRect:keyboardFrame fromView:self.cc_KeyboardWindow];
+    keyboardFrame = [self cc_convertKeyboardFrame:keyboardFrame];
     
 #ifdef CCKeyboardControlLoggingEnabled
     if (force)
@@ -225,7 +225,7 @@ char *keyboardTriggerOffsetKey;
     CGRect keyboardEndFrame;
     [[notification.userInfo valueForKey:UIKeyboardFrameEndUserInfoKey] getValue: &keyboardEndFrame];
 
-    CGRect frame = [self convertRect:keyboardEndFrame fromView:self.cc_KeyboardWindow];
+    CGRect frame = [self cc_convertKeyboardFrame:keyboardEndFrame];
     if (self.ccKeyboardControlHelper.constraintBasedKeyboardDidMoveBlock)
         self.ccKeyboardControlHelper.constraintBasedKeyboardDidMoveBlock(frame, state);
     
@@ -253,6 +253,11 @@ char *keyboardTriggerOffsetKey;
     if (self.ccKeyboardControlHelper.animationStartAbsoluteTime > 0 && CFAbsoluteTimeGetCurrent() - self.ccKeyboardControlHelper.animationStartAbsoluteTime < duration)
         [self cc_processNotificationWithoutAnimation:notification state:CCKeyboardControlStateOpening force:YES];
     self.ccKeyboardControlHelper.animationStartAbsoluteTime = 0;
+}
+
+- (CGRect)cc_convertKeyboardFrame:(CGRect)keyboardFrame {
+    CGRect windowFrame = [self.cc_KeyboardView.superview convertRect:keyboardFrame toView:nil];
+    return [self convertRect:windowFrame fromView:nil];
 }
 
 //---------------------------------------------
