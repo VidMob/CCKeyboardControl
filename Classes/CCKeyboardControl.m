@@ -271,11 +271,18 @@ char *keyboardTriggerOffsetKey;
     return keyboardBeginFrame.origin.x != 0 || keyboardEndFrame.origin.x != 0;
 }
 
-+ (BOOL)cc_isWrongKeyboardAnimation:(NSNotification *)notification
++ (BOOL)cc_isWrongKeyboardShowAnimation:(NSNotification *)notification
 {
     CGRect keyboardBeginFrame;
     [[notification.userInfo valueForKey:UIKeyboardFrameBeginUserInfoKey] getValue: &keyboardBeginFrame];
     return keyboardBeginFrame.origin.y > self.cc_KeyboardWindow.height;
+}
+
++ (BOOL)cc_isWrongKeyboardHideAnimation:(NSNotification *)notification
+{
+    CGRect keyboardEndFrame;
+    [[notification.userInfo valueForKey:UIKeyboardFrameEndUserInfoKey] getValue: &keyboardEndFrame];
+    return keyboardEndFrame.origin.y < self.cc_KeyboardWindow.height;
 }
 
 + (BOOL)cc_isFakeAnimation:(NSNotification *)notification
@@ -374,7 +381,7 @@ char *keyboardTriggerOffsetKey;
         if (!view.cc_isOnTop || !view.window)
             return;
         
-        if ([self cc_isHorizontalKeyboardAnimation:notification] || [self cc_isWrongKeyboardAnimation:notification] || [self cc_isFakeAnimation:notification])
+        if ([self cc_isHorizontalKeyboardAnimation:notification] || [self cc_isWrongKeyboardShowAnimation:notification] || [self cc_isFakeAnimation:notification])
             [view cc_processNotificationWithoutAnimation:notification state:CCKeyboardControlStateOpening force:NO];
         else
             [view cc_animateWithNotification:notification state:CCKeyboardControlStateOpening];
@@ -402,7 +409,7 @@ char *keyboardTriggerOffsetKey;
         if ((!view.cc_isOnTop && !view.cc_isOnControllerWhatHasPresentedController) || !view.window)
             return;
 
-        if ([self cc_isHorizontalKeyboardAnimation:notification] || [self cc_isFakeAnimation:notification])
+        if ([self cc_isHorizontalKeyboardAnimation:notification] || [self cc_isWrongKeyboardHideAnimation:notification] || [self cc_isFakeAnimation:notification])
             [view cc_simulateKeyboardDissapearingWithoutAnimation];
         else
             [view cc_animateWithNotification:notification state:CCKeyboardControlStateClosing];
